@@ -1,14 +1,18 @@
 const router = require('express-promise-router')();
 const db = require('../db');
 
-router.get('/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { rows } = await db.query('SELECT name FROM users WHERE title = $1', [id]);
-    res.json(rows[0]);
-  } catch (err) {
-    console.log(err.stack);
-  }
+// get all audits for the requesting user
+router.get('/', async (req, res) => {
+  const { user_id: id } = req.user;
+  const { rows } = await db.query('SELECT * FROM audits WHERE assigned_to = $1', [id]);
+  res.json(rows[0]);
+});
+
+// get specific audit by id
+router.get('/:auditid', async (req, res) => {
+  const { auditid } = req.params;
+  const { rows } = await db.query('SELECT * FROM audits WHERE audit_id = $1', [auditid]);
+  res.json(rows[0]);
 });
 
 module.exports = router;
