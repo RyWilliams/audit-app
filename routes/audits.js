@@ -8,6 +8,13 @@ router.get('/', async (req, res) => {
   res.json(rows);
 });
 
+// get all reviews completed for the requesting user
+router.get('/reviews', async (req, res) => {
+  const { id } = req.user;
+  const { rows } = await db.query('SELECT * FROM audits WHERE analyst_audited = $1 AND is_complete = true', [id]);
+  res.json(rows);
+});
+
 // get specific audit by id
 router.get('/:auditid', async (req, res) => {
   const { auditid } = req.params;
