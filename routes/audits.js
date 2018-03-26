@@ -1,11 +1,11 @@
 const router = require('express-promise-router')();
 const db = require('../db');
 
-// get all audits for the requesting user
+// get all audits assigned to the requesting user
 router.get('/', async (req, res) => {
-  const { user_id: id } = req.user;
+  const { id } = req.user;
   const { rows } = await db.query('SELECT * FROM audits WHERE assigned_to = $1', [id]);
-  res.json(rows[0]);
+  res.json(rows);
 });
 
 // get specific audit by id
