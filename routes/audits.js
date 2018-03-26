@@ -35,6 +35,49 @@ router.get('/:auditid', async (req, res, next) => {
 });
 
 // manual audit creation
+router.post('/new', (req, res, next) => {
+  // analyst admin level required (3), as set by passport auth on req.user
+  if (req.user.permission === 3) return next();
+  // else not authorized
+  const err = new Error('invalid permissions');
+  err.status = 403;
+  return next(err);
+}, [
+  // validate inputs
+  body('assignedTo').exists(),
+  body('analystAudited').exists(),
+  body('devId').exists().isUUID(),
+  body('url').exists().trim(),
+], oneOf([
+  // either selling or leasing status must exist
+  body('sellingStatus').isInt({ min: 1, max: 4 }),
+  body('leasingStatus').isInt({ min: 1, max: 4 }),
+]), async (req, res) => {
+  const errors = validationResult(req);
+  // send back any validation errors
+  if (!errors.isEmpty()) {
+    return res.status(422).json({ error: errors.mapped() });
+  }
+  // no errors, extract and insert values
+  const {
+    assignedTo,
+    analystAudited,
+    devId,
+    url,
+    sellingStatus,
+    leasingStatus,
+  } = req.body;
+
+  const text = 'INSERT INTO audits (assigned_to, analyst_audited, development_id, url, selling_status_id, leasing_status_id) VALUES($1, $2, $3, $4, $5, $6) RETURNING *';
+  const values = [assignedTo, analystAudited, devId, url, sellingStatus, leasingStatus];
+
+  const { rows } = await db.query(text, values);
+  const audit = rows[0];
+  // all went as planned, return the inserted row as confirmation
+  return res.status(200).json({ audit });
+});
+
+// submit audit results
 });
 
 module.exports = router;
