@@ -78,6 +78,49 @@ router.post('/new', (req, res, next) => {
 });
 
 // submit audit results
+router.post('/:auditid', oneOf([
+  // issues will be null if audit submitted with no issues
+  body('issues').custom(value => value === null),
+  // else each issue should have a numbered id and note field
+  [
+    body('issues.*.id').exists().isInt(),
+    body('issues.*.note').exists(),
+  ],
+]), async (req, res) => {
+  const { issues } = req.body;
+  const { auditid } = req.params;
+  const { rows } = await db.query('SELECT * FROM audits WHERE audit_id = $1', [auditid]);
+  const audit = rows[0];
+
+  // audit must be assigned to requesting user and not yet complete
+  if (req.user.id !== audit.assigned_to || audit.is_complete) {
+    return res.status(403).json({ error: 'not authorized' });
+  }
+
+  // send back any validation errors
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(422).json({ error: errors.mapped() });
+  }
+
+  // no issues - close audit
+  if (!issues) {
+    await db.query('UPDATE audits SET completed_on = NOW(), is_complete = true WHERE audit_id = $1', [auditid]);
+    return res.status(200).send();
+  }
+
+  // else convert issues into query friendly format
+  const issueIds = [];
+  const issueNotes = [];
+  issues.forEach((e) => {
+    issueIds.push(e.id);
+    issueNotes.push(e.note);
+  });
+  // insert formatted vals into db
+  const vals = [auditid, issueIds, issueNotes];
+  await db.query('INSERT INTO audit_issues (audit_id, issue_id, issue_note) SELECT $1, * FROM UNNEST($2::int[], $3::text[])', vals);
+  // note: db trigger will set audit to complete after insert of issues
+  return res.status(200).send();
 });
 
 module.exports = router;
