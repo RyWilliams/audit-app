@@ -10,7 +10,7 @@ const jwtOpts = {
 const strategy = new JwtStrategy(jwtOpts, async (jwtPayload, done) => {
   const { id } = jwtPayload;
   try {
-    const { rows } = await db.query('SELECT user_id, name, email, title, deactivated, permission_level_id FROM users WHERE user_id = $1', [id]);
+    const { rows } = await db.query('SELECT user_id as id, name, email, title, deactivated, permission_level_id as permission FROM users WHERE user_id = $1', [id]);
     const user = rows[0];
     if (user) {
       done(null, user);

@@ -1,11 +1,24 @@
 const router = require('express-promise-router')();
 const jwt = require('jsonwebtoken');
+const { body, validationResult } = require('express-validator/check');
 const { JWTKEY } = require('../config/config');
 const db = require('../db');
 
-router.post('/login', async (req, res) => {
-  const { email, password } = req.body;
+router.post('/login', [
+  body('email')
+    .exists().withMessage('email missing')
+    .isEmail()
+    .trim(),
+  body('password')
+    .exists().withMessage('password missing'),
+], async (req, res) => {
+  const errors = validationResult(req);
 
+  if (!errors.isEmpty()) {
+    return res.status(422).json({ error: errors.mapped() });
+  }
+  // if there are no errors process requests
+  const { email, password } = req.body;
   const { rows } = await db.query('SELECT user_id, name, email, title, deactivated, password = crypt($1, password) as "authenticated" FROM users WHERE email = $2', [password, email]);
   const user = rows[0];
 
