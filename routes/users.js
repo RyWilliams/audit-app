@@ -96,7 +96,7 @@ router.post('/new', async (req, res, next) => {
 // reset password
 router.post('/reset', async (req, res) => {
   // check incoming passwords match
-  if (req.body.newPassword !== req.body.newPasswordConfirm) return res.status(401).json({ error: 'incorrect password' });
+  if (req.body.newPassword !== req.body.newPasswordConfirm) return res.status(401).json({ error: 'passwords do not match' });
 
   // confirm current password
   const { id } = req.user;

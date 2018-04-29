@@ -84,7 +84,7 @@ router.post('/:auditid', oneOf([
   // else each issue should have a numbered id and note field
   [
     body('issues.*.id').exists().isInt(),
-    body('issues.*.note').exists(),
+    body('issues.*.note').exists().trim(),
   ],
 ]), async (req, res) => {
   const { issues } = req.body;
@@ -118,7 +118,7 @@ router.post('/:auditid', oneOf([
   });
   // insert formatted vals into db
   const vals = [auditid, issueIds, issueNotes];
-  await db.query('INSERT INTO audit_issues (audit_id, issue_id, issue_note) SELECT $1, * FROM UNNEST($2::int[], $3::text[])', vals);
+  await db.query('INSERT INTO audit_issues (audit_id, issue_id, issue_note) SELECT $1, * FROM UNNEST($2::int[], $3::text[]) ON CONFLICT DO NOTHING', vals);
   // note: db trigger will set audit to complete after insert of issues
   return res.status(200).send();
 });
