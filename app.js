@@ -9,8 +9,8 @@ passport.use(jwtStrategy);
 
 const app = express();
 
-// react client in client/build to be served statically
-app.use(express.static(path.join(__dirname, 'client', 'build')));
+// react client in client/public to be served statically
+app.use(express.static(path.join(__dirname, 'client', 'public')));
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
