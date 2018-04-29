@@ -5,7 +5,9 @@
         "no-unused-vars": ["error", { "args": "none" }],
         "no-console": "off",
         "max-len": ["error", { "code": 120, "ignoreStrings": true }],
-        "react/jsx-filename-extension": [1, { "extensions": [".js", ".jsx"] }],
+        "react/jsx-filename-extension": [1, { "extensions": [".js", ".jsx"] }]
+    },
+    "env": {
         "browser": true
     }
 }
