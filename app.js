@@ -27,9 +27,22 @@ app.use((req, res, next) => {
 
 app.use((err, req, res, next) => {
   res.status(err.status || 500);
-  // print stack trace in development
-  if (app.get('env') === 'development') console.error(err);
-  res.json({ error: err.message });
+  if (app.get('env') === 'development') {
+    console.error(err);
+    return res.json({
+      error: {
+        message: err.message,
+        stackTrace: err.stack,
+        status: err.status,
+      },
+    });
+  }
+  // non-descript 500 errors & no stacktrace in production
+  let serverError;
+  if (res.statusCode >= 500) {
+    serverError = 'server error';
+  }
+  return res.json({ error: serverError || err.message });
 });
 
 module.exports = app;
