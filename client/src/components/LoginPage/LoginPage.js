@@ -2,19 +2,24 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import axios from 'axios';
 import { withStyles } from '@material-ui/core/styles';
-import Button from '@material-ui/core/Button';
-import TextField from '@material-ui/core/TextField';
+import { TextField, Grid, Button } from '@material-ui/core/';
 
 const styles = theme => ({
-  container: {
-    marginTop: theme.spacing.unit * 25,
-  },
-  textField: {
-    width: 300,
+  root: {
+    flexGrow: 1,
+    height: '100vh',
+    background: '#e6e6e6',
   },
   button: {
     marginTop: theme.spacing.unit * 2,
-    width: 300,
+  },
+  form: {
+    padding: theme.spacing.unit * 3,
+    background: 'white',
+    borderRadius: '2px',
+  },
+  boxHeight: {
+    height: '80vh',
   },
 });
 
@@ -56,34 +61,40 @@ class LoginPage extends Component {
     const { classes } = this.props;
 
     return (
-      <form className={classes.container} name="login">
-        <TextField
-          autoFocus
-          id="email"
-          label="Email"
-          type="email"
-          error={this.state.formErrors.email}
-          className={classes.textField}
-          value={this.state.email}
-          onChange={this.handleFormChange}
-          margin="normal"
-        />
-        <br />
-        <TextField
-          id="password"
-          label="Password"
-          type="password"
-          error={this.state.formErrors.password}
-          className={classes.textField}
-          value={this.state.password}
-          onChange={this.handleFormChange}
-          margin="normal"
-        />
-        <br />
-        <Button className={classes.button} variant="raised" color="primary" type="submit" onClick={e => this.handleSubmit(e)}>
-          Login
-        </Button>
-      </form>
+      <div className={classes.root}>
+        <Grid container justify="center" alignItems="center" className={classes.boxHeight}>
+          <Grid item xs={8} sm={6} md={3}>
+            <form name="login" className={classes.form}>
+              <TextField
+                autoFocus
+                id="email"
+                label="Email"
+                type="email"
+                error={this.state.formErrors.email}
+                value={this.state.email}
+                onChange={this.handleFormChange}
+                margin="normal"
+                fullWidth
+              />
+              <br />
+              <TextField
+                id="password"
+                label="Password"
+                type="password"
+                error={this.state.formErrors.password}
+                value={this.state.password}
+                onChange={this.handleFormChange}
+                margin="normal"
+                fullWidth
+              />
+              <br />
+              <Button className={classes.button} fullWidth variant="raised" color="primary" type="submit" onClick={e => this.handleSubmit(e)}>
+                Login
+              </Button>
+            </form>
+          </Grid>
+        </Grid>
+      </div>
     );
   }
 }
