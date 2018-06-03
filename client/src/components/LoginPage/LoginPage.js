@@ -1,8 +1,10 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import axios from 'axios';
 import { withStyles } from '@material-ui/core/styles';
 import { TextField, Grid, Button, LinearProgress } from '@material-ui/core/';
+import Auth from '../auth';
+
+const auth = new Auth();
 
 const styles = theme => ({
   root: {
@@ -34,6 +36,12 @@ class LoginPage extends Component {
     },
   };
 
+  componentDidMount = () => {
+    if (auth.loggedIn()) {
+      this.props.history.replace('/dashboard');
+    }
+  }
+
   handleFormChange = (e) => {
     this.setState({
       [e.target.id]: e.target.value,
@@ -52,10 +60,9 @@ class LoginPage extends Component {
 
     this.setState({ loading: true });
 
-    axios.post('/login', { user })
-      .then(res => console.log(res.data))
-      // errors from api will appear here in err.response
-      .catch(err => console.log(err.response));
+    return auth.login(user)
+      .then(res => this.props.history.replace('/dashboard'))
+      .catch(err => console.log(err));
     // reset form state
   }
 
@@ -104,6 +111,9 @@ class LoginPage extends Component {
 
 LoginPage.propTypes = {
   classes: PropTypes.shape({}).isRequired,
+  history: PropTypes.shape({
+    replace: PropTypes.func.isRequired,
+  }).isRequired,
 };
 
 export default withStyles(styles)(LoginPage);
