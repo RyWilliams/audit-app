@@ -30,10 +30,8 @@ class LoginPage extends Component {
     email: '',
     password: '',
     loading: false,
-    formErrors: {
-      email: false,
-      password: false,
-    },
+    emailError: false,
+    passwordError: false,
   };
 
   componentDidMount = () => {
@@ -57,6 +55,12 @@ class LoginPage extends Component {
     };
 
     // TODO: validate fields before submitting
+    if (!user.email || !user.password) {
+      return this.setState({
+        emailError: !user.email,
+        passwordError: !user.password,
+      });
+    }
 
     this.setState({ loading: true });
 
@@ -80,7 +84,7 @@ class LoginPage extends Component {
                 id="email"
                 label="Email"
                 type="email"
-                error={this.state.formErrors.email}
+                error={this.state.emailError}
                 value={this.state.email}
                 onChange={this.handleFormChange}
                 margin="normal"
@@ -91,7 +95,7 @@ class LoginPage extends Component {
                 id="password"
                 label="Password"
                 type="password"
-                error={this.state.formErrors.password}
+                error={this.state.passwordError}
                 value={this.state.password}
                 onChange={this.handleFormChange}
                 margin="normal"
