@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import axios from 'axios';
 import { withStyles } from '@material-ui/core/styles';
-import { TextField, Grid, Button } from '@material-ui/core/';
+import { TextField, Grid, Button, LinearProgress } from '@material-ui/core/';
 
 const styles = theme => ({
   root: {
@@ -27,6 +27,7 @@ class LoginPage extends Component {
   state = {
     email: '',
     password: '',
+    loading: false,
     formErrors: {
       email: false,
       password: false,
@@ -49,7 +50,8 @@ class LoginPage extends Component {
 
     // TODO: validate fields before submitting
 
-    // submit to /login
+    this.setState({ loading: true });
+
     axios.post('/login', { user })
       .then(res => console.log(res.data))
       // errors from api will appear here in err.response
@@ -64,6 +66,7 @@ class LoginPage extends Component {
       <div className={classes.root}>
         <Grid container justify="center" alignItems="center" className={classes.boxHeight}>
           <Grid item xs={8} sm={6} md={3}>
+            <LinearProgress style={{ visibility: this.state.loading ? 'visible' : 'hidden' }} />
             <form name="login" className={classes.form}>
               <TextField
                 autoFocus
