@@ -26,7 +26,13 @@ router.post('/login', [
   if (!user.authenticated) return res.status(401).json({ error: 'incorrect password' });
   if (user.deactivated) return res.status(403).json({ error: 'inactive account' });
 
-  const token = jwt.sign({ id: user.user_id }, JWTKEY);
+  const token = jwt.sign({
+    id: user.user_id,
+    name: user.name,
+    email: user.email,
+    title: user.title,
+  }, JWTKEY);
+
   return res.status(200).json({ token });
 });
 
