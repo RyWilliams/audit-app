@@ -1,10 +1,11 @@
 const { Strategy: JwtStrategy, ExtractJwt } = require('passport-jwt');
 const { JWTKEY } = require('./config');
+const { LOCAL_JWTKEY } = require('../local');
 const { queryOne } = require('../db');
 
 const jwtOpts = {
   jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-  secretOrKey: JWTKEY,
+  secretOrKey: JWTKEY || LOCAL_JWTKEY,
 };
 
 const strategy = new JwtStrategy(jwtOpts, async (jwtPayload, done) => {

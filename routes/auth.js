@@ -2,6 +2,7 @@ const router = require('express-promise-router')();
 const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator/check');
 const { JWTKEY } = require('../config/config');
+const { LOCAL_JWTKEY } = require('../local');
 const { queryOne } = require('../db');
 
 router.post('/login', [
@@ -34,12 +35,13 @@ router.post('/login', [
   if (!user.authenticated) return res.status(401).json({ error: 'incorrect password' });
   if (user.deactivated) return res.status(403).json({ error: 'inactive account' });
 
+  const key = JWTKEY || LOCAL_JWTKEY;
   const token = jwt.sign({
     id: user.user_id,
     name: user.name,
     email: user.email,
     title: user.title,
-  }, JWTKEY);
+  }, key);
 
   return res.status(200).json({ token });
 });
