@@ -1,35 +1,33 @@
 const router = require('express-promise-router')();
 const { body, validationResult, oneOf } = require('express-validator/check');
-const db = require('../db');
+const { query, queryOne } = require('../db');
 
 // get all audits assigned to the requesting user
 router.get('/', async (req, res) => {
   const { id } = req.user;
-  const { rows } = await db.query('SELECT * FROM audits WHERE assigned_to = $1', [id]);
-  res.json(rows);
+  const audits = await query('SELECT * FROM audits WHERE assigned_to = $1', [id]);
+  res.json(audits);
 });
 
 // get all reviews completed for the requesting user
 router.get('/reviews', async (req, res) => {
   const { id } = req.user;
-  const { rows } = await db.query('SELECT * FROM audits WHERE analyst_audited = $1 AND is_complete = true', [id]);
-  res.json(rows);
+  const reviews = await query('SELECT * FROM audits WHERE analyst_audited = $1 AND is_complete = true', [id]);
+  res.json(reviews);
 });
 
 // get specific audit by id
 // if audit is not completed also send active issues to render form
 router.get('/:auditid', async (req, res, next) => {
   const { auditid } = req.params;
-  const { rows } = await db.query('SELECT * FROM audits WHERE audit_id = $1', [auditid]);
-  const audit = rows[0];
+  const audit = await queryOne('SELECT * FROM audits WHERE audit_id = $1', [auditid]);
   // if the audit has already been completed send it
   if (audit.is_complete === true) return res.json(audit);
   // else provide the active issues alongside audit so the user can complete
   res.locals.audit = audit;
   return next();
 }, async (req, res) => {
-  const { rows } = await db.query('SELECT issue_id, issue_type FROM audit_issue_values WHERE deactivated = false');
-  const issues = rows;
+  const issues = await query('SELECT issue_id, issue_type FROM audit_issue_values WHERE deactivated = false');
   const { audit } = res.locals;
   res.json({ audit, issues });
 });
@@ -68,11 +66,20 @@ router.post('/new', (req, res, next) => {
     leasingStatus,
   } = req.body;
 
-  const text = 'INSERT INTO audits (assigned_to, analyst_audited, development_id, url, selling_status_id, leasing_status_id) VALUES($1, $2, $3, $4, $5, $6) RETURNING *';
+  const auditInsert = `
+    INSERT INTO audits (
+      assigned_to,
+      analyst_audited,
+      development_id,
+      url,
+      selling_status_id,
+      leasing_status_id
+    )
+    VALUES ($1, $2, $3, $4, $5, $6)
+    RETURNING *`;
   const values = [assignedTo, analystAudited, devId, url, sellingStatus, leasingStatus];
 
-  const { rows } = await db.query(text, values);
-  const audit = rows[0];
+  const audit = await queryOne(auditInsert, values);
   // all went as planned, return the inserted row as confirmation
   return res.status(200).json({ audit });
 });
@@ -89,8 +96,7 @@ router.post('/:auditid', oneOf([
 ]), async (req, res) => {
   const { issues } = req.body;
   const { auditid } = req.params;
-  const { rows } = await db.query('SELECT * FROM audits WHERE audit_id = $1', [auditid]);
-  const audit = rows[0];
+  const audit = await queryOne('SELECT * FROM audits WHERE audit_id = $1', [auditid]);
 
   // audit must be assigned to requesting user and not yet complete
   if (req.user.id !== audit.assigned_to || audit.is_complete) {
@@ -105,20 +111,30 @@ router.post('/:auditid', oneOf([
 
   // no issues - close audit
   if (!issues) {
-    await db.query('UPDATE audits SET completed_on = NOW(), is_complete = true WHERE audit_id = $1', [auditid]);
+    await query('UPDATE audits SET completed_on = NOW(), is_complete = true WHERE audit_id = $1', [auditid]);
     return res.status(200).send();
   }
 
   // else convert issues into query friendly format
   const issueIds = [];
   const issueNotes = [];
-  issues.forEach((e) => {
-    issueIds.push(e.id);
-    issueNotes.push(e.note);
+  issues.forEach(({ id, note }) => {
+    issueIds.push(id);
+    issueNotes.push(note);
   });
   // insert formatted vals into db
+  const insertQuery = `
+    INSERT INTO audit_issues (
+      audit_id,
+      issue_id,
+      issue_note
+    ) 
+    SELECT $1, *
+    FROM UNNEST($2::int[], $3::text[])
+    ON CONFLICT DO NOTHING;
+  `;
   const vals = [auditid, issueIds, issueNotes];
-  await db.query('INSERT INTO audit_issues (audit_id, issue_id, issue_note) SELECT $1, * FROM UNNEST($2::int[], $3::text[]) ON CONFLICT DO NOTHING', vals);
+  await query(insertQuery, vals);
   // note: db trigger will set audit to complete after insert of issues
   return res.status(200).send();
 });

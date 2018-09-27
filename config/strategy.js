@@ -1,6 +1,6 @@
 const { Strategy: JwtStrategy, ExtractJwt } = require('passport-jwt');
 const { JWTKEY } = require('./config');
-const db = require('../db');
+const { queryOne } = require('../db');
 
 const jwtOpts = {
   jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -10,8 +10,17 @@ const jwtOpts = {
 const strategy = new JwtStrategy(jwtOpts, async (jwtPayload, done) => {
   const { id } = jwtPayload;
   try {
-    const { rows } = await db.query('SELECT user_id as id, name, email, title, deactivated, permission_level_id as permission FROM users WHERE user_id = $1', [id]);
-    const user = rows[0];
+    const query = `
+      SELECT user_id as id,
+        name,
+        email,
+        title,
+        deactivated,
+        permission_level_id as permission
+      FROM users
+      WHERE user_id = $1;
+    `;
+    const user = await queryOne(query, [id]);
     if (user && !user.deactivated) {
       done(null, user);
     } else {
