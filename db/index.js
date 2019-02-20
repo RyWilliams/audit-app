@@ -10,11 +10,11 @@ const pool = new Pool({
 
 module.exports = {
   query: async (text, params) => {
-    const rows = await pool.query(text, params);
+    const { rows } = await pool.query(text, params);
     return rows;
   },
   queryOne: async (text, params) => {
-    const rows = await pool.query(text, params);
+    const { rows } = await pool.query(text, params);
     return rows[0];
   },
   pool,
